@@ -1,0 +1,56 @@
+{
+  "name": "prodemailcampaigngulp",
+  "version": "1.0.0",
+  "description": "Email Gulp Automation Workflow",
+  "main": "gulpfile.js",
+  "scripts": {
+    "start": "gulp",
+    "build": "gulp build --production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/battlecheeze/prodemailcampaigngulp.git"
+  },
+  "keywords": [
+    "Email",
+    "HTML",
+    "Email",
+    "Gulp",
+    "Email"
+  ],
+  "author": "Christian Albert Provido",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/battlecheeze/prodemailcampaigngulp/issues"
+  },
+  "homepage": "https://github.com/battlecheeze/prodemailcampaigngulp#readme",
+  "dependencies": {
+    "browser-sync": "^2.27.7",
+    "del": "^6.0.0",
+    "gulp": "^4.0.2",
+    "gulp-autoprefixer": "^8.0.0",
+    "gulp-changed": "^4.0.3",
+    "gulp-cli": "^2.3.0",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-inline-css": "^4.0.0",
+    "gulp-replace": "^1.1.3",
+    "gulp-sass": "^5.0.0",
+    "node-sass": "^6.0.1",
+    "panini": "^1.7.2",
+    "sass": "^1.43.4",
+    "siphon-media-query": "^1.0.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.0",
+    "graceful-fs": "^4.2.8",
+    "gulp-cond": "^1.0.0",
+    "gulp-if": "^3.0.0",
+    "gulp-if-else": "^1.0.3",
+    "gulp-postcss": "^9.0.1",
+    "gulp-purgecss": "^4.0.3",
+    "gulp-remove-empty-lines": "^0.1.0",
+    "lazypipe": "^1.0.2",
+    "postcss": "^8.3.11",
+    "yargs": "^17.2.1"
+  }
+}
