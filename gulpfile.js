@@ -13,6 +13,7 @@ const
     gulpIf = require('gulp-if'),
     gulpCond = require('gulp-cond'),
     ifElse = require('gulp-if-else'),
+    minifyInline = require('gulp-minify-inline'),
     del = require('del'),
     lazypipe = require('lazypipe'),
     replace = require('gulp-replace'),
@@ -45,7 +46,9 @@ const // source
     // distribution
     paniniData = "src/data",
     cssDist = "dist/css/",
-    cssProdBundle = "dist/css/bundle.css"
+    cssFonts = "dist/css/fonts.css",
+    cssMQ = "dist/css/media-queries.css",
+    cssProdBundle = "dist/css/bundle.css",
     prodDist = "dist/",
     prodDistGlob = "dist/" + globDir + ".html",
     // archive
@@ -95,6 +98,7 @@ function editorCSS() {
         .pipe(postcss([
             autoprefixer()
         ]))
+        // will purge unused css in the styling format to reduce the size of the file 
         .pipe(gulpIf(PRODUCTION, purgecss(
            {
               content: [prodDistGlob]
@@ -127,7 +131,7 @@ function outputCSS() {
 
 function inline() {
     return gulp.src(prodDistGlob)
-         .pipe(gulpIf(PRODUCTION, inliner(cssProdBundle)))
+         .pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssFonts, cssMQ)))
          /*
         .pipe(gulpCond(PRODUCTION,
             inliner(cssProdBundle),
@@ -135,6 +139,7 @@ function inline() {
         ))
         */
         .pipe(removeEmptyLines())
+        //.pipe(minifyInline())
         .pipe(gulp.dest(prodDist));
         /*
         .pipe(gulpCond(PRODUCTION,
@@ -146,9 +151,10 @@ function inline() {
         */
 }
 
-function inliner(css) {
+function inliner(css, fonts, mqCss) {
     var css = fs.readFileSync(css).toString();
-    var mqCss = siphon(css);
+    var fonts = fs.readFileSync(fonts).toString();
+    var mqCss = fs.readFileSync(mqCss).toString();
     
     var pipe = lazypipe()
        .pipe(inlineCss, {
@@ -158,6 +164,7 @@ function inliner(css) {
          preserveMediaQueries: true,
          removeLinkTags: false
        })
+       .pipe(replace, '<!-- <fonts> -->', `<style>${fonts}</style>`)
        .pipe(replace, '<!-- <style> -->', `<style>${mqCss}</style>`)
        .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/bundle.css">', '');
 
@@ -183,8 +190,7 @@ function browserSYNC(done) {
 function watchFiles() {
     gulp.watch(paniniPagesGlob, gulp.series(editorHTML, inline)).on('change', browserSync.reload);
     gulp.watch([paniniLayouts + globDir, paniniPartials + globDir], gulp.series(resetPages, editorHTML, inline)).on('change', browserSync.reload);
-    //gulp.watch(['./src/work/{layouts,partials,helpers,data}/**/*'], [panini.refresh]);
-    gulp.watch([sassWatch, cssDist + globDir + ".css" ], editorCSS).on('change', browserSync.reload);
+    gulp.watch(sassWatch, gulp.series(resetPages,inline, editorCSS)).on('change', browserSync.reload);
 }
 
 exports.editorCSS = editorCSS;
@@ -195,5 +201,5 @@ exports.test = test;
 exports.clean = clean;
 exports.browserSYNC = browserSYNC;
 exports.watchFiles = watchFiles;
-exports.build = gulp.parallel(gulp.series(clean, editorCSS, editorHTML, inline), browserSYNC, watchFiles);
+exports.build = gulp.parallel(gulp.series(clean, editorHTML, editorCSS, inline), browserSYNC, watchFiles);
 exports.default = gulp.parallel(gulp.series(clean, editorHTML, editorCSS), browserSYNC, watchFiles);
