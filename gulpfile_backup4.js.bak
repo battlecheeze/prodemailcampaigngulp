@@ -5,11 +5,15 @@ const
     browserSync = require('browser-sync').create(),
     sass = require('gulp-sass')(require('node-sass')),
     htmlmin = require('gulp-htmlmin')
+    siphon = require('siphon-media-query'),
     inlineCss = require('gulp-inline-css'),
     fs = require('graceful-fs'),
     yargs = require('yargs'),
     purgecss = require('gulp-purgecss'),
     gulpIf = require('gulp-if'),
+    gulpCond = require('gulp-cond'),
+    ifElse = require('gulp-if-else'),
+    minifyInline = require('gulp-minify-inline'),
     del = require('del'),
     lazypipe = require('lazypipe'),
     replace = require('gulp-replace'),
@@ -23,8 +27,16 @@ const PRODUCTION = !!(yargs.argv.production);
 // file watch, destination and distribution
 
 const // source
+    mapURL = "./",
     globDir = "**/*",
+    htmlWatch = "src/" + globDir + ".html",
     sassWatch = "src/sass/" + globDir + ".scss",
+    sassBundle = "src/sass/bundle.scss",
+    // destination
+    cssDest = "src/work/css/",
+    cssBundle = "src/work/css/bundle.css",
+    htmlDest = "src/work/",
+    htmlDestGlob = "src/work/" + globDir + ".html",
     // panini
     paniniPages = "src/pages",
     paniniPagesGlob = paniniPages + "/" + globDir + ".html",
@@ -40,9 +52,17 @@ const // source
     prodDist = "dist/",
     prodDistGlob = "dist/" + globDir + ".html",
     // archive
-    sassArchive = "!src/sass/archive/" + globDir + ".scss";
+    htmlArchive = "!src/work/archive/" + globDir + ".html",
+    sassArchive = "!src/sass/archive/" + globDir + ".scss",
+    cssArchive = "!src/work/archive/css/" + globDir + ".css";
+
+function test(done) {
+    console.log("Hello this is a test and " + PRODUCTION + " should see here");
+    done();
+}
 
 function editorHTML() {
+    //return gulp.src([htmlWatch, htmlArchive])
     return gulp.src(paniniPagesGlob)
         .pipe(panini({
             root: paniniPages,
@@ -51,6 +71,7 @@ function editorHTML() {
             helpers: paniniHelpers,
             data: paniniData
         }))
+        //.pipe(gulp.dest(htmlDest))
         .pipe(gulp.dest(prodDist))
 }
 
@@ -62,8 +83,10 @@ function resetPages(done) {
 
 function clean() {
     return del([
-        prodDistGlob,
+        prodDist,
+        cssBundle,
         cssDist,
+        htmlDest,
     ]);
 }
 
@@ -82,14 +105,50 @@ function editorCSS() {
            }
         )))
         .pipe(gulp.dest(cssDist))
+      /*
+        .pipe(gulpCond(PRODUCTION,
+            // if it is true then
+            gulp.dest(cssDist),
+            // else produce in Distribution
+            gulp.dest(cssDest)
+        ))
+      */
         .pipe(browserSync.stream());
 }
+/*
+function outputCSS() {
+    return gulp.src([sassBundle, sassArchive])
+    .pipe(sass.sync({
+    ┆  outputStyle: 'compact'
+    }).on('error', sass.logError))
+    .pipe
+     (autoprefixer({
+      browsers: ['last 2 versions', 'ie > 10']
+     }))
+    .pipe(gulp.dest(cssDist));
+    }
+ */
 
 function inline() {
     return gulp.src(prodDistGlob)
-        .pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssFonts, cssMQ)))
+         .pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssFonts, cssMQ)))
+         /*
+        .pipe(gulpCond(PRODUCTION,
+            inliner(cssProdBundle),
+            inliner(cssBundle)
+        ))
+        */
         .pipe(removeEmptyLines())
+        //.pipe(minifyInline())
         .pipe(gulp.dest(prodDist));
+        /*
+        .pipe(gulpCond(PRODUCTION,
+            // if true then
+            gulp.dest(prodDist),
+            // else
+            gulp.dest(htmlDest)
+        ));
+        */
 }
 
 function inliner(css, fonts, mqCss) {
@@ -122,7 +181,6 @@ function browserSYNC(done) {
          baseDir: 'dist',
          index: 'index.html'
       },
-      // you can choose which browser you want to launch every time ProdEmailCampaign going to run
       browser: [
          '/Applications/Firefox Developer Edition.app/Contents/MacOS/firefox', 
          '/Applications/Google Chrome Canary.app/Contents/MacOS/Google\ Chrome\ Canary'
@@ -141,6 +199,7 @@ exports.editorCSS = editorCSS;
 exports.editorHTML = editorHTML;
 exports.inline = inline;
 exports.resetPages = resetPages;
+exports.test = test;
 exports.clean = clean;
 exports.browserSYNC = browserSYNC;
 exports.watchFiles = watchFiles;
