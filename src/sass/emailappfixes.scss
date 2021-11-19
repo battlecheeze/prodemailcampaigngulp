@@ -1,0 +1,94 @@
+/* purgecss start ignore */
+div[style*="margin: 16px 0"] {
+   margin: 0 !important;
+   Margin: 0 !important;
+}
+
+.ExternalClass {
+   width: 100%;
+}
+
+.ExternalClass,
+.ExternalClass p,
+.ExternalClass span,
+.ExternalClass font,
+.ExternalClass td,
+.ExternalClass div {
+   line-height: 100%;
+}
+
+.ReadMsgBody {
+   width: 100%;
+   background-color: #f2f3f2;
+}
+
+a[x-apple-data-detectors] {
+   color: inherit !important;
+   text-decoration: none !important;
+   font-size: inherit !important;
+   font-family: inherit !important;
+   font-weight: inherit !important;
+   line-height: inherit !important;
+}
+
+.yshortcuts a {
+   border-bottom: none !important;
+}
+
+.desktop-no-bottom-padding {
+   padding-bottom: 0px !important;
+}
+
+.desktop-extra-padding {
+   padding-left: 150px !important;
+   padding-right: 150px !important;
+}
+
+.hide {
+   visibility: hidden;
+   display: none;
+   mso-hide: all;
+}
+
+.mbl-show {
+   display: none!important;
+   mso-hide: all!important;
+}
+
+.AppleLinksRed a {
+   color: #c41f3e !important;
+   text-decoration: none !important;
+}
+
+.AppleLinksBlack a {
+   color: #000000 !important;
+   text-decoration: none !important;
+}
+
+.AppleLinksGrey a {
+   color: #606366 !important;
+   text-decoration: none !important;
+}
+
+.AppleLinksWhite a {
+   color: #ffffff !important;
+   text-decoration: none !important;
+}
+
+#outlook a {
+   padding: 0;
+}
+
+.rating2 {
+   max-width: 200px !important;
+}
+
+.em_border {
+   border-right: 1px solid #ca1d49 !important;
+}
+
+.em_border1 {
+   border-left: 1px solid #ca1d49 !important;
+}
+
+/* purgecss end ignore */

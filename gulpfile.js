@@ -31,13 +31,14 @@ const // source
     paniniPages = "src/pages",
     paniniPagesGlob = paniniPages + "/" + globDir + ".html",
     paniniLayouts = "src/layouts",
+    paniniLayoutsArchive = "!src/layouts/archive",
     paniniPartials = "src/partials",
     paniniPartialsArchive = "!src/partials/archive",
     paniniHelpers = "src/helpers",
     paniniData = "src/data",
     // distribution
     cssDist = "dist/css/",
-    cssFonts = "dist/css/fonts.css",
+    //cssFonts = "dist/css/fonts.css", // only when it is needed to call
     cssEmailAppFix = "dist/css/emailappfixes.css",
     imgDist = "dist/images",
     cssMQ = "dist/css/media-queries.css",
@@ -48,7 +49,7 @@ const // source
     sassArchive = "!src/sass/archive/" + globDir + ".scss";
 
 function editorHTML() {
-    return gulp.src([paniniPagesGlob, paniniPartialsArchive])
+    return gulp.src([paniniPagesGlob, paniniLayoutsArchive, paniniPartialsArchive])
         .pipe(panini({
             root: paniniPages,
             layouts: paniniLayouts,
@@ -84,7 +85,7 @@ function editorCSS() {
         .pipe(gulpIf(PRODUCTION, purgecss(
            {
               content: [prodDistGlob],
-              FontFace: true,
+              FontFace: true, // purge fonts that aren't needed
               output: "dist/purgedcss/purged.txt"
            }
         )))
@@ -94,15 +95,17 @@ function editorCSS() {
 
 function inline() {
     return gulp.src(prodDistGlob)
-        .pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssFonts, cssEmailAppFix, cssMQ)))
-         // will remove empty lines on the final product
+        .pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssEmailAppFix, cssMQ)))
+        //.pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssFonts, cssEmailAppFix, cssMQ)))
+        // will remove empty lines on the final product
         .pipe(removeEmptyLines())
         .pipe(gulp.dest(prodDist));
 }
 
-function inliner(css, fonts,fixin, mqCss) {
+//function inliner(css, fonts,fixin, mqCss) {
+function inliner(css ,fixin, mqCss) {
     var css = fs.readFileSync(css).toString();
-    var fonts = fs.readFileSync(fonts).toString();
+    //var fonts = fs.readFileSync(fonts).toString();
     var fixin = fs.readFileSync(fixin).toString();
     var mqCss = fs.readFileSync(mqCss).toString();
     
@@ -113,10 +116,10 @@ function inliner(css, fonts,fixin, mqCss) {
          preserveMediaQueries: true,
          removeLinkTags: false
        })
-       .pipe(replace, '<!-- <fonts> -->', `<style>${fonts}</style>`)
+       //.pipe(replace, '<!-- <fonts> -->', `<style>${fonts}</style>`)
        .pipe(replace, '<!-- <fixes> -->', `<style>${fixin}</style>`)
        .pipe(replace, '<!-- <style> -->', `<style>${mqCss}</style>`)
-       .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/fonts.css">', '')
+       //.pipe(replace, '<link rel="stylesheet" type="text/css" href="css/fonts.css">', '')
        .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/emailappfixes.css">', '')
        .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/bundle.css">', '')
        .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/media-queries.css">', '');
