@@ -17,7 +17,7 @@ const
     panini = require('panini');
 
 // Look for the --production flag
-//const PRODUCTION = !!(yargs.argv.production); // double negative
+//const PRODUCTION = !!(yargs.argv.production); // double negative beacuse it's true~
 const PRODUCTION = !!(yargs.argv.production);
 
 // file watch, destination and distribution
@@ -25,16 +25,21 @@ const PRODUCTION = !!(yargs.argv.production);
 const // source
     globDir = "**/*",
     sassWatch = "src/sass/" + globDir + ".scss",
+    // images
+    img = "src/images",
     // panini
     paniniPages = "src/pages",
     paniniPagesGlob = paniniPages + "/" + globDir + ".html",
     paniniLayouts = "src/layouts",
     paniniPartials = "src/partials",
+    paniniPartialsArchive = "!src/partials/archive",
     paniniHelpers = "src/helpers",
-    // distribution
     paniniData = "src/data",
+    // distribution
     cssDist = "dist/css/",
     cssFonts = "dist/css/fonts.css",
+    cssEmailAppFix = "dist/css/emailappfixes.css",
+    imgDist = "dist/images",
     cssMQ = "dist/css/media-queries.css",
     cssProdBundle = "dist/css/bundle.css",
     prodDist = "dist/",
@@ -43,7 +48,7 @@ const // source
     sassArchive = "!src/sass/archive/" + globDir + ".scss";
 
 function editorHTML() {
-    return gulp.src(paniniPagesGlob)
+    return gulp.src([paniniPagesGlob, paniniPartialsArchive])
         .pipe(panini({
             root: paniniPages,
             layouts: paniniLayouts,
@@ -78,7 +83,9 @@ function editorCSS() {
         // will purge unused css in the styling format to reduce the size of the file 
         .pipe(gulpIf(PRODUCTION, purgecss(
            {
-              content: [prodDistGlob]
+              content: [prodDistGlob],
+              FontFace: true,
+              output: "dist/purgedcss/purged.txt"
            }
         )))
         .pipe(gulp.dest(cssDist))
@@ -87,27 +94,30 @@ function editorCSS() {
 
 function inline() {
     return gulp.src(prodDistGlob)
-        .pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssFonts, cssMQ)))
+        .pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssFonts, cssEmailAppFix, cssMQ)))
+         // will remove empty lines on the final product
         .pipe(removeEmptyLines())
         .pipe(gulp.dest(prodDist));
 }
 
-function inliner(css, fonts, mqCss) {
+function inliner(css, fonts,fixin, mqCss) {
     var css = fs.readFileSync(css).toString();
     var fonts = fs.readFileSync(fonts).toString();
+    var fixin = fs.readFileSync(fixin).toString();
     var mqCss = fs.readFileSync(mqCss).toString();
     
     var pipe = lazypipe()
        .pipe(inlineCss, {
          applyStyleTags: false,
          removeStyleTags: true,
-         applyTableAttributes: true,
          preserveMediaQueries: true,
          removeLinkTags: false
        })
        .pipe(replace, '<!-- <fonts> -->', `<style>${fonts}</style>`)
+       .pipe(replace, '<!-- <fixes> -->', `<style>${fixin}</style>`)
        .pipe(replace, '<!-- <style> -->', `<style>${mqCss}</style>`)
        .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/fonts.css">', '')
+       .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/emailappfixes.css">', '')
        .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/bundle.css">', '')
        .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/media-queries.css">', '');
 
@@ -122,7 +132,8 @@ function browserSYNC(done) {
          baseDir: 'dist',
          index: 'index.html'
       },
-      // you can choose which browser you want to launch every time ProdEmailCampaign going to run
+      // you can choose which browser you want to launch every time ProdEmailCampaign is going to run
+      // By the way, the settings are for mac
       browser: [
          '/Applications/Firefox Developer Edition.app/Contents/MacOS/firefox', 
          '/Applications/Google Chrome Canary.app/Contents/MacOS/Google\ Chrome\ Canary'
@@ -133,8 +144,9 @@ function browserSYNC(done) {
 
 function watchFiles() {
     gulp.watch(paniniPagesGlob, gulp.series(editorHTML, inline)).on('change', browserSync.reload);
-    gulp.watch([paniniLayouts + globDir, paniniPartials + globDir], gulp.series(resetPages, editorHTML, inline)).on('change', browserSync.reload);
+    gulp.watch([paniniLayouts + globDir, paniniPartials + globDir, paniniData + globDir], gulp.series(resetPages, editorHTML, inline)).on('change', browserSync.reload);
     gulp.watch(sassWatch, gulp.series(resetPages,inline, editorCSS)).on('change', browserSync.reload);
+    gulp.watch([img, imgDist]).on('change', browserSync.reload);
 }
 
 exports.editorCSS = editorCSS;
