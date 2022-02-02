@@ -4,7 +4,7 @@ const
     autoprefixer = require('autoprefixer'),
     browserSync = require('browser-sync').create(),
     sass = require('gulp-sass')(require('node-sass')),
-    htmlmin = require('gulp-htmlmin')
+    htmlmin = require('gulp-htmlmin'),
     inlineCss = require('gulp-inline-css'),
     fs = require('graceful-fs'),
     yargs = require('yargs'),
@@ -29,10 +29,12 @@ const // source
     img = "src/images",
     // panini
     paniniPages = "src/pages",
+    paniniPagesArchive = "!src/pages/archive/" + globDir + ".html",
     paniniPagesGlob = paniniPages + "/" + globDir + ".html",
     paniniLayouts = "src/layouts",
     paniniLayoutsArchive = "!src/layouts/archive",
     paniniPartials = "src/partials",
+    paniniPartialsGlob = paniniPartials + "/" + globDir + ".html",
     paniniPartialsArchive = "!src/partials/archive",
     paniniHelpers = "src/helpers",
     paniniData = "src/data",
@@ -49,7 +51,7 @@ const // source
     sassArchive = "!src/sass/archive/" + globDir + ".scss";
 
 function editorHTML() {
-    return gulp.src([paniniPagesGlob, paniniLayoutsArchive, paniniPartialsArchive])
+    return gulp.src([paniniPagesGlob, paniniPagesArchive, paniniLayoutsArchive, paniniPartialsArchive])
         .pipe(panini({
             root: paniniPages,
             layouts: paniniLayouts,
@@ -60,6 +62,11 @@ function editorHTML() {
         .pipe(gulp.dest(prodDist))
 }
 
+function htmlMinifier() {
+   return gulp.src(prodDistGlob)
+      .pipe(htmlmin({collapseWhitespace: true}))
+      .pipe(gulp.dest(prodDist))
+}
 
 function resetPages(done) {
   panini.refresh();
@@ -86,7 +93,7 @@ function editorCSS() {
            {
               content: [prodDistGlob],
               FontFace: true, // purge fonts that aren't needed
-              output: "dist/purgedcss/purged.txt"
+              //output: "dist/purgedcss/purged.txt"
            }
         )))
         .pipe(gulp.dest(cssDist))
@@ -95,7 +102,8 @@ function editorCSS() {
 
 function inline() {
     return gulp.src(prodDistGlob)
-        .pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssEmailAppFix, cssMQ)))
+        //.pipe(gulpIf(PRODUCTION, inliner(cssMQ)))
+        .pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssMQ)))
         //.pipe(gulpIf(PRODUCTION, inliner(cssProdBundle, cssFonts, cssEmailAppFix, cssMQ)))
         // will remove empty lines on the final product
         .pipe(removeEmptyLines())
@@ -103,10 +111,12 @@ function inline() {
 }
 
 //function inliner(css, fonts,fixin, mqCss) {
-function inliner(css ,fixin, mqCss) {
+//function inliner(css ,fixin, mqCss) {
+function inliner(css, mqCss) {
+//function inliner(mqCss) {
     var css = fs.readFileSync(css).toString();
     //var fonts = fs.readFileSync(fonts).toString();
-    var fixin = fs.readFileSync(fixin).toString();
+    //var fixin = fs.readFileSync(fixin).toString();
     var mqCss = fs.readFileSync(mqCss).toString();
     
     var pipe = lazypipe()
@@ -117,12 +127,14 @@ function inliner(css ,fixin, mqCss) {
          removeLinkTags: false
        })
        //.pipe(replace, '<!-- <fonts> -->', `<style>${fonts}</style>`)
-       .pipe(replace, '<!-- <fixes> -->', `<style>${fixin}</style>`)
+       //.pipe(replace, '<!-- <fixes> -->', `<style>${fixin}</style>`)
        .pipe(replace, '<!-- <style> -->', `<style>${mqCss}</style>`)
        //.pipe(replace, '<link rel="stylesheet" type="text/css" href="css/fonts.css">', '')
-       .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/emailappfixes.css">', '')
+       //.pipe(replace, '<link rel="stylesheet" type="text/css" href="css/emailappfixes.css">', '')
        .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/bundle.css">', '')
-       .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/media-queries.css">', '');
+       .pipe(replace, '<link rel="stylesheet" type="text/css" href="css/media-queries.css">', '')
+       .pipe(replace, '<!--remove this in final', '')
+       .pipe(replace, 'remove this in final-->', '');
 
   return pipe();
 
@@ -147,13 +159,14 @@ function browserSYNC(done) {
 
 function watchFiles() {
     gulp.watch(paniniPagesGlob, gulp.series(editorHTML, inline)).on('change', browserSync.reload);
-    gulp.watch([paniniLayouts + globDir, paniniPartials + globDir, paniniData + globDir], gulp.series(resetPages, editorHTML, inline)).on('change', browserSync.reload);
+    gulp.watch([paniniLayouts + globDir, paniniPartialsGlob, paniniData + globDir], gulp.series(resetPages, editorHTML, inline)).on('change', browserSync.reload);
     gulp.watch(sassWatch, gulp.series(resetPages,inline, editorCSS)).on('change', browserSync.reload);
     gulp.watch([img, imgDist]).on('change', browserSync.reload);
 }
 
 exports.editorCSS = editorCSS;
 exports.editorHTML = editorHTML;
+exports.htmlMinifier = htmlMinifier;
 exports.inline = inline;
 exports.resetPages = resetPages;
 exports.clean = clean;
